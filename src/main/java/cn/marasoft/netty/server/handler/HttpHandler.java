@@ -26,7 +26,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
         String path = basePath.toURI() + webroot + "/" + uri;
         path = !path.contains("file:") ? path : path.substring(5);
         System.out.println(path);
-        path.replace("//", "/");
+        path = path.replace("//", "/");
         return new File(path);
     }
 
@@ -48,8 +48,18 @@ public class HttpHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
 //        HttpResponse response = new DefaultHttpResponse(fullHttpRequest.getProtocolVersion(), HttpResponseStatus.OK);
         HttpResponse response = new DefaultHttpResponse(fullHttpRequest.protocolVersion(), HttpResponseStatus.OK);
-        String contextType = "text/html;";
-        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, contextType + "charset=utf-8");
+        String contextType = "text/html";
+
+        if(uri.endsWith(".css")) {
+            contextType = "text/css";
+        } /*else if(uri.endsWith(".js")) {
+            contextType = "text/javascript";
+        }*/ else if(uri.toLowerCase().matches("(jpg|png|gif|ico)$")) {
+            String ext = uri.substring(uri.lastIndexOf("."));
+            contextType = "image/" + ext;
+        }
+
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE, contextType + ";charset=utf-8");
         boolean keepAlive = HttpHeaders.isKeepAlive(fullHttpRequest);
         if(keepAlive) {
             response.headers().set(HttpHeaders.Names.CONTENT_LENGTH, file.length());

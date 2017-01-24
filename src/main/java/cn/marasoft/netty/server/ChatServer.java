@@ -1,6 +1,7 @@
 package cn.marasoft.netty.server;
 
 import cn.marasoft.netty.server.handler.HttpHandler;
+import cn.marasoft.netty.server.handler.WebSocketHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -8,6 +9,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
@@ -32,9 +34,10 @@ public class ChatServer {
                     .option(ChannelOption.SO_BACKLOG, 1024)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            ChannelPipeline pipeline = socketChannel.pipeline();
-                            //写一段逻辑，对HTTP协议的支持
                             //工作流，流水线，pipeline
+                            ChannelPipeline pipeline = socketChannel.pipeline();
+
+                            //===========   对HTTP协议的支持   ============
                             //HTTP请求解码器
                             pipeline.addLast(new HttpServerCodec());
                             //编码，输出
@@ -45,6 +48,13 @@ public class ChatServer {
                             pipeline.addLast(new ChunkedWriteHandler());
                             //处理HTTP请求的业务逻辑
                             pipeline.addLast(new HttpHandler());
+
+                            //===========   对WebSocket协议的支持   ============
+                            //加上这个Handler已经支持WebSocket请求
+                            pipeline.addLast(new WebSocketServerProtocolHandler("/im"));
+                            //处理WebSocket逻辑的Handler
+                            pipeline.addLast(new WebSocketHandler());
+
                         }
                     });
             //采用同步的方式监听客户端
